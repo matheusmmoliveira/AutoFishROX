@@ -58,37 +58,38 @@ def main():
     current_path = os.getcwd()
     img_folder = os.path.join(current_path, 'images')
     cast_img = os.path.join(img_folder, f'cast.jpg')
-    fish_level = "3_noite"
+    fish_level = "5"
     reel_img = os.path.join(img_folder, f'reel_{fish_level}.png')
-    number_of_moves = 0
-    is_trained = False
+    fishing_times = 0
+    error = 0
+    is_trained = True
     catch = False
-    finish_after = 50
-    error = 7
+    finish_after = 71
 
     try:
         move_mouse_to_image(cast_img, confidence=0.75, duration=np.random.uniform(0.6, 1.0))
-        human_click()
-        sleep(np.random.uniform(0.4, 0.5))
         while True:
-            if is_image_on_screen(reel_img, confidence=0.75, grayscale=True): #or is_image_on_screen(reel2_img, confidence=0.77):
-                human_click(trained=is_trained)
-                sleep(np.random.uniform(3.0, 5.5))
-                if number_of_moves >= 3:
-                    is_trained = True
-                catch = True
-            elif is_image_on_screen(cast_img, confidence=0.70):
-                if not catch:
+            if is_image_on_screen(cast_img, confidence=0.70):
+                if not catch and fishing_times != 0:
                     print("ERRO. NÃO PEGUEI  PEIXE :(")
                     error += 1
-                if number_of_moves >= finish_after or error >= 10:
+                if fishing_times >= finish_after or error >= 3:
                     sys.exit(0)
                 else:
-                    print(f"missing just {finish_after - number_of_moves} tries")                
-                number_of_moves += 1
+                    print(f"doing more {finish_after - fishing_times} tries")                
+                fishing_times += 1
                 catch = False
                 human_click()
-                sleep(0.3)
+                sleep(np.random.uniform(0.1, 0.3))
+
+                while True:
+                    if is_image_on_screen(reel_img, confidence=0.75, grayscale=True):
+                        human_click(trained=is_trained)
+                        while not is_image_on_screen(cast_img, confidence=0.70) and is_image_on_screen(reel_img, confidence=0.60, grayscale=True):
+                            human_click(trained=is_trained)
+                            sleep(np.random.uniform(0.07, 0.1))
+                        catch = True
+                        break
             
     except KeyboardInterrupt:
         sys.exit(0)
