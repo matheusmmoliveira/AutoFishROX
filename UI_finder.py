@@ -30,28 +30,25 @@ def human_mouse_movement(start, end, duration=1.0, steps=1000):
 
 def move_mouse_to_image(img, confidence=0.9, duration=1.0):
     try:
-        button_to_press = pyautogui.locateOnScreen(img, confidence=confidence)
-        button_center = pyautogui.center(button_to_press)
+        button_to_press = pyautogui.locateCenterOnScreen(img, confidence=confidence)
         mouse_pos = pyautogui.position()
-        #if not (mouse_pos.x >= button_to_press.left and mouse_pos.x <= button_to_press.left + button_to_press.width and \
-        #        mouse_pos.y >=button_to_press.top and mouse_pos.y <= button_to_press.top + button_to_press.height):
-        button_end_point = [ coordinate * np.random.uniform(0.91, 1.0) for coordinate in button_center]
+        button_end_point = (np.random.uniform(button_to_press[0]-10, button_to_press[0]+10), np.random.uniform(button_to_press[1]-10, button_to_press[1]+10))
         human_mouse_movement(mouse_pos, button_end_point, duration=duration)
     except pyautogui.ImageNotFoundException:
         print("Sem imagem")
 
-def is_image_on_screen(img, confidence=0.9):
+def is_image_on_screen(img, confidence=0.9, grayscale=False):
     try:
-        button_to_press = pyautogui.locateOnScreen(img, confidence=confidence)
+        button_to_press = pyautogui.locateOnScreen(img, confidence=confidence, grayscale=grayscale)
         return True
     except pyautogui.ImageNotFoundException:
         return False
 
 def human_click(button='left', trained=False):
     if trained:
-        human_reaction_time = (0.190, 0.220)
+        human_reaction_time = (0.190, 0.210)
     else:
-        human_reaction_time = (0.210, 0.280)
+        human_reaction_time = (0.210, 0.230)
     reaction_time = np.random.uniform(human_reaction_time[0], human_reaction_time[1])
     sleep(reaction_time)
     pydirectinput.click(button=button)
@@ -60,43 +57,38 @@ def human_click(button='left', trained=False):
 def main():
     current_path = os.getcwd()
     img_folder = os.path.join(current_path, 'images')
-    start_fishing_img = os.path.join(img_folder, 'start_fishing.jpg')
-    cast_img = os.path.join(img_folder, 'cast.jpg')
-    reel_prontera_img = os.path.join(img_folder, 'reel_prontera.jpg')
-    reel_morroc_img = os.path.join(img_folder, 'reel_morroc.jpg')
-    reel_morroc2_img = os.path.join(img_folder, 'reel_morroc2.jpg')
+    cast_img = os.path.join(img_folder, f'cast.jpg')
+    fish_level = "3_noite"
+    reel_img = os.path.join(img_folder, f'reel_{fish_level}.png')
     number_of_moves = 0
     is_trained = False
     catch = False
-    finish_after = 73
+    finish_after = 50
+    error = 7
 
     try:
-        move_mouse_to_image(start_fishing_img, confidence=0.95, duration=np.random.uniform(0.6, 1.0))
-        human_click()
-        sleep(np.random.uniform(0.8, 1.7))
         move_mouse_to_image(cast_img, confidence=0.75, duration=np.random.uniform(0.6, 1.0))
         human_click()
         sleep(np.random.uniform(0.4, 0.5))
         while True:
-            if is_image_on_screen(reel_prontera_img, confidence=0.75):
+            if is_image_on_screen(reel_img, confidence=0.75, grayscale=True): #or is_image_on_screen(reel2_img, confidence=0.77):
                 human_click(trained=is_trained)
                 sleep(np.random.uniform(3.0, 5.5))
-                if np.random.randint(1, 100) > 80:
-                    move_mouse_to_image(cast_img, confidence=0.75, duration=np.random.uniform(0.3, 0.6))
                 if number_of_moves >= 3:
                     is_trained = True
-                number_of_moves += 1
-                if number_of_moves >= finish_after:
-                    sys.exit(0)
-                else:
-                    print(f"missing just {finish_after - number_of_moves} tries")
                 catch = True
-            elif is_image_on_screen(cast_img, confidence=0.75):
-                human_click()
-                sleep(0.1)
+            elif is_image_on_screen(cast_img, confidence=0.70):
                 if not catch:
                     print("ERRO. NÃO PEGUEI  PEIXE :(")
+                    error += 1
+                if number_of_moves >= finish_after or error >= 10:
+                    sys.exit(0)
+                else:
+                    print(f"missing just {finish_after - number_of_moves} tries")                
+                number_of_moves += 1
                 catch = False
+                human_click()
+                sleep(0.3)
             
     except KeyboardInterrupt:
         sys.exit(0)
