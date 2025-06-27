@@ -66,11 +66,13 @@ def main():
     error = 0
     is_trained = True
     catch = False
-    finish_after = 8
+    finish_after = 199
 
     try:
         move_mouse_to_image(cast_img, confidence=0.75, duration=np.random.uniform(0.6, 1.0))
         while True:
+            if error == 3:
+                sys.exit(99)
             start_time = timer()
             if is_image_on_screen(cast_img, confidence=0.70):
                 if not catch and fishing_times != 0:
@@ -97,8 +99,9 @@ def main():
                         break
                     elapsed_time = timer() - start_time
                     if elapsed_time > 10:
-                        human_click()
-                        start_time = timer()
+                        move_mouse_to_image(cast_img, duration=np.random.uniform(0.2, 0.4))
+                        error += 1
+                        break
             
     except KeyboardInterrupt:
         sys.exit(0)
